@@ -3,10 +3,10 @@ package com.craftinginterpreters.lox;
 import java.util.Objects;
 
 class Token {
-    final TokenType type;
-    final String lexeme;
-    final Object literal;
-    final int line;
+    private final TokenType type;
+    private final String lexeme;
+    private final Object literal;
+    private final int line;
 
     Token(TokenType type, String lexeme, Object literal, int line) {
         this.type = type;
@@ -15,8 +15,9 @@ class Token {
         this.line = line;
     }
 
+    @Override
     public String toString() {
-        return type + " " + lexeme + " " + literal;
+        return type + " " + lexeme + " " + literal + " on line " + line;
     }
 
     @Override
