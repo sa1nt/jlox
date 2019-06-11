@@ -1,5 +1,7 @@
 package com.craftinginterpreters.lox;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -69,12 +71,22 @@ class Scanner {
             case '=': addToken(match('=') ? EQUAL_EQUAL : EQUAL); break;
             case '<': addToken(match('=') ? LESS_EQUAL : LESS); break;
             case '>': addToken(match('=') ? GREATER_EQUAL : GREATER); break;
-
             case '/':
-                if (match('/')) {
-                    // A comment goes until the end of the line.
+                if (peek() == '/') {
+                    // Line comment
+                    advance(); // consume the peek'ed '/'
                     while (peek() != '\n' && !isAtEnd()) advance();
+                } else if (peek() == '*') {
+                    // Block comment
+                    do {
+                        advance(); //consume the peek'ed '*' and other stuff
+                        if (peek() == '\n') {
+                            line++;
+                        }
+                    } while (peek() != '*' && peekNext() != '/' && !isAtEnd());
+                    advance(); advance();
                 } else {
+                    // Just a SLASH
                     addToken(SLASH);
                 }
                 break;
@@ -165,16 +177,26 @@ class Scanner {
         return isAlpha(c) || isDigit(c);
     }
 
+    /**
+     * Returns the nexr char (at {@code this.current + 1}) without advancing
+     */
     private char peekNext() {
         if (current + 1 >= source.length()) return '\0';
         return source.charAt(current + 1);
     }
 
+    /**
+     * Returns the char at {@code this.current} without advancing
+     */
     private char peek() {
         if (isAtEnd()) return '\0';
         return source.charAt(current);
     }
 
+    /**
+     * Returns {@code true} if the {@code this.current} char is equal to expected
+     * and moves {@code this.current} to next char
+     */
     private boolean match(char expected) {
         if (isAtEnd()) return false;
         if (source.charAt(current) != expected) return false;
@@ -183,6 +205,9 @@ class Scanner {
         return true;
     }
 
+    /**
+     * Returns the char at {@code this.current} and advances {@code this.current}
+     */
     private char advance() {
         current++;
         return source.charAt(current - 1);
@@ -192,7 +217,10 @@ class Scanner {
         addToken(type, null);
     }
 
-    private void addToken(TokenType type, Object literal) {
+    /**
+     * Adds a new Token, optionally with a literal.
+     */
+    private void addToken(TokenType type, @Nullable Object literal) {
         String text = source.substring(start, current);
         tokens.add(new Token(type, text, literal, line));
     }

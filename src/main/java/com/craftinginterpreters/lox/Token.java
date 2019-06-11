@@ -1,5 +1,7 @@
 package com.craftinginterpreters.lox;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Objects;
 
 class Token {
@@ -8,7 +10,7 @@ class Token {
     private final Object literal;
     private final int line;
 
-    Token(TokenType type, String lexeme, Object literal, int line) {
+    Token(TokenType type, String lexeme, @Nullable Object literal, int line) {
         this.type = type;
         this.lexeme = lexeme;
         this.literal = literal;
