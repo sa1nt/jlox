@@ -84,6 +84,7 @@ class Scanner {
                             line++;
                         }
                     } while (peek() != '*' && peekNext() != '/' && !isAtEnd());
+                    // consume the closing */
                     advance(); advance();
                 } else {
                     // Just a SLASH
