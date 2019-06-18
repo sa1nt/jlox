@@ -17,7 +17,7 @@ class Token {
         this.line = line;
     }
 
-    public String getLexeme() {
+    String getLexeme() {
         return lexeme;
     }
 
