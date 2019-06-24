@@ -17,8 +17,20 @@ class Token {
         this.line = line;
     }
 
+    public TokenType getType() {
+        return type;
+    }
+
     String getLexeme() {
         return lexeme;
+    }
+
+    public Object getLiteral() {
+        return literal;
+    }
+
+    public int getLine() {
+        return line;
     }
 
     @Override
