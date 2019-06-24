@@ -5,6 +5,9 @@ import com.craftinginterpreters.lox.Expr.Grouping;
 import com.craftinginterpreters.lox.Expr.Literal;
 import com.craftinginterpreters.lox.Expr.Unary;
 
+/**
+ * Prints {@code Expr} in Reverse Polish Notation
+ */
 public class RpnPrinter implements Expr.Visitor<String> {
     String print(Expr expr) {
         return expr.accept(this);
