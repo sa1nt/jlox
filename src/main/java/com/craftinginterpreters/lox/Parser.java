@@ -1,6 +1,8 @@
 package com.craftinginterpreters.lox;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static com.craftinginterpreters.lox.TokenType.*;
 
@@ -24,56 +26,48 @@ class Parser {
         return equality();
     }
 
+    /**
+     * equality → comparison ( ( "!=" | "==" ) comparison )* ;
+     */
     private Expr equality() {
         Expr expr = comparison();
-
-        while (match(BANG_EQUAL, EQUAL_EQUAL)) {
-            Token operator = previous();
-            Expr right = comparison();
-            expr = new Expr.Binary(expr, operator, right);
-        }
-
+        expr = parseLeftAssociativeSeries(expr, List.of(BANG_EQUAL, EQUAL_EQUAL), this::comparison);
         return expr;
     }
 
+    /**
+     * comparison → addition ( ( ">" | ">=" | "<" | "<=" ) addition )* ;
+     */
     private Expr comparison() {
         Expr expr = addition();
-
-        while (match(GREATER, GREATER_EQUAL, LESS, LESS_EQUAL)) {
-            Token operator = previous();
-            Expr right = addition();
-            expr = new Expr.Binary(expr, operator, right);
-        }
-
+        expr = parseLeftAssociativeSeries(expr, List.of(GREATER, GREATER_EQUAL, LESS, LESS_EQUAL), this::addition);
         return expr;
     }
 
+    /**
+     * addition → multiplication ( ( "+" | "-" ) multiplication )* ;
+     */
     private Expr addition() {
         Expr expr = multiplication();
-
-        while (match(MINUS, PLUS)) {
-            Token operator = previous();
-            Expr right = multiplication();
-            expr = new Expr.Binary(expr, operator, right);
-        }
-
+        expr = parseLeftAssociativeSeries(expr, List.of(MINUS, PLUS), this::multiplication);
         return expr;
     }
 
+    /**
+     * multiplication → unary ( ( "/" | "*" ) unary )* ;
+     */
     private Expr multiplication() {
         Expr expr = unary();
-
-        while (match(SLASH, STAR)) {
-            Token operator = previous();
-            Expr right = unary();
-            expr = new Expr.Binary(expr, operator, right);
-        }
-
+        expr = parseLeftAssociativeSeries(expr, List.of(SLASH, STAR), this::unary);
         return expr;
     }
 
+    /**
+     * unary → ( "!" | "-" ) unary
+     *       | primary ;
+     */
     private Expr unary() {
-        if (match(BANG, MINUS)) {
+        if (match(List.of(BANG, MINUS))) {
             Token operator = previous();
             Expr right = unary();
             return new Expr.Unary(operator, right);
@@ -82,12 +76,16 @@ class Parser {
         return primary();
     }
 
+    /**
+     * primary → NUMBER | STRING | "false" | "true" | "nil"
+     *         | "(" expression ")" ;
+     */
     private Expr primary() {
         if (match(FALSE)) return new Expr.Literal(false);
         if (match(TRUE)) return new Expr.Literal(true);
         if (match(NIL)) return new Expr.Literal(null);
 
-        if (match(NUMBER, STRING)) {
+        if (match(List.of(NUMBER, STRING))) {
             return new Expr.Literal(previous().getLiteral());
         }
 
@@ -98,6 +96,15 @@ class Parser {
         }
 
         throw error(peek(), "Expect expression.");
+    }
+
+    private Expr parseLeftAssociativeSeries(Expr lhs, Collection<TokenType> tokenTypes, Supplier<Expr> rightSupplier) {
+        while (match(tokenTypes)) {
+            Token operator = previous();
+            Expr right = rightSupplier.get();
+            lhs = new Expr.Binary(lhs, operator, right);
+        }
+        return lhs;
     }
 
     private Token consume(TokenType type, String message) {
@@ -111,6 +118,7 @@ class Parser {
         return new ParseError();
     }
 
+    // TODO: will be used later for error handling
     private void synchronize() {
         advance();
 
@@ -133,14 +141,15 @@ class Parser {
         }
     }
 
-    private boolean match(TokenType... types) {
-        for (TokenType type : types) {
-            if (check(type)) {
-                advance();
-                return true;
-            }
-        }
+    private boolean match(Collection<TokenType> types) {
+        return types.stream().anyMatch(this::match);
+    }
 
+    private boolean match(TokenType type) {
+        if (check(type)) {
+            advance();
+            return true;
+        }
         return false;
     }
 
