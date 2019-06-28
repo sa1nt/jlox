@@ -23,7 +23,16 @@ class Parser {
     }
 
     private Expr expression() {
-        return equality();
+        return comma();
+    }
+
+    /**
+     * comma → equality ( "," equality )* ;
+     */
+    private Expr comma() {
+        Expr expr = equality();
+        expr = parseLeftAssociativeSeries(expr, List.of(COMMA), this::equality);
+        return expr;
     }
 
     /**
