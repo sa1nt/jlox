@@ -27,7 +27,8 @@ public class GenerateAst {
                 "Binary   : Expr left, Token operator, Expr right",
                 "Grouping : Expr expression",
                 "Literal  : Object value",
-                "Unary    : Token operator, Expr right"
+                "Unary    : Token operator, Expr right",
+                "Ternary  : Expr condition, Expr caseTrue, Expr caseFalse"
         ));
     }
 
@@ -40,6 +41,9 @@ public class GenerateAst {
             writer.println();
             writer.println("import java.util.List;");
             writer.println();
+            writer.println("/**");
+            writer.println(" * This file is generated automatically by the GenerateAst.java");
+            writer.println(" */");
             writer.printf("abstract class %s {\n", baseName);
 
             defineVisitor(writer, baseName, types);
@@ -94,7 +98,7 @@ public class GenerateAst {
         // Fields.
         writer.println();
         for (String field : fields) {
-            writer.printf("    final %s;", field);
+            writer.printf("    final %s;\n", field);
         }
 
         writer.println("  }");

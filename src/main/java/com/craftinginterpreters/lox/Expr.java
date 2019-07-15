@@ -2,12 +2,16 @@ package com.craftinginterpreters.lox;
 
 import java.util.List;
 
+/**
+ * This file is generated automatically by the GenerateAst.java
+ */
 abstract class Expr {
   interface Visitor<R> {
     R visitBinaryExpr(Binary expr);
     R visitGroupingExpr(Grouping expr);
     R visitLiteralExpr(Literal expr);
     R visitUnaryExpr(Unary expr);
+    R visitTernaryExpr(Ternary expr);
   }
   static class Binary extends Expr {
     Binary(Expr left, Token operator, Expr right) {
@@ -58,6 +62,21 @@ abstract class Expr {
 
     final Token operator;
     final Expr right;
+  }
+  static class Ternary extends Expr {
+    Ternary(Expr condition, Expr caseTrue, Expr caseFalse) {
+      this.condition = condition;
+      this.caseTrue = caseTrue;
+      this.caseFalse = caseFalse;
+    }
+
+    <R> R accept(Visitor<R> visitor) {
+      return visitor.visitTernaryExpr(this);
+    }
+
+    final Expr condition;
+    final Expr caseTrue;
+    final Expr caseFalse;
   }
 
   abstract <R> R accept(Visitor<R> visitor);

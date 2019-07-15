@@ -23,7 +23,25 @@ class Parser {
     }
 
     private Expr expression() {
-        return comma();
+        return conditionalExpr();
+    }
+
+    /**
+     * Conditional (ternary) operator
+     * condtionalExpr → comma ("?" condtionalExpr ":" conditionalExpr)
+     * Has low(est?) precedence and is right-associative
+     * As per https://en.wikipedia.org/wiki/%3F:
+     */
+    private Expr conditionalExpr() {
+        Expr condition = comma();
+        if (match(QUESTION)) {
+            Expr caseTrue = conditionalExpr();
+            if (match(COLON)) {
+                Expr caseFalse = conditionalExpr();
+                return new Expr.Ternary(condition, caseTrue, caseFalse);
+            }
+        }
+        return condition;
     }
 
     /**

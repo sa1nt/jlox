@@ -1,9 +1,6 @@
 package com.craftinginterpreters.lox;
 
-import com.craftinginterpreters.lox.Expr.Binary;
-import com.craftinginterpreters.lox.Expr.Grouping;
-import com.craftinginterpreters.lox.Expr.Literal;
-import com.craftinginterpreters.lox.Expr.Unary;
+import com.craftinginterpreters.lox.Expr.*;
 
 /**
  * Prints {@code Expr} in Reverse Polish Notation
@@ -31,5 +28,11 @@ public class RpnPrinter implements Expr.Visitor<String> {
     @Override
     public String visitUnaryExpr(Unary expr) {
         return expr.right.accept(this) + " " + expr.operator.getLexeme();
+    }
+
+    @Override
+    public String visitTernaryExpr(Ternary expr) {
+        return expr.caseTrue.accept(this) + " " + expr.caseFalse.accept(this) + " " +
+                expr.condition.accept(this) + " ?";
     }
 }
