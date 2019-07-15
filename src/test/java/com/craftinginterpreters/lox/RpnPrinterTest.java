@@ -71,6 +71,34 @@ class RpnPrinterTest {
                                 )
                         ),
                         "123 - 45.67 *"
+                ),
+                Arguments.arguments(
+                        new Expr.Ternary(
+                                new Expr.Literal(true),
+                                new Expr.Literal(1),
+                                new Expr.Ternary(
+                                        new Expr.Literal(true),
+                                        new Expr.Literal(2),
+                                        new Expr.Literal(3)
+                                )
+                        ),
+                        "1 2 3 true ? true ?"
+                ),
+                Arguments.arguments(
+                        new Expr.Ternary(
+                                new Expr.Literal(true),
+                                new Expr.Ternary(
+                                        new Expr.Literal(true),
+                                        new Expr.Literal(1),
+                                        new Expr.Literal(2)
+                                ),
+                                new Expr.Ternary(
+                                        new Expr.Literal(true),
+                                        new Expr.Literal(3),
+                                        new Expr.Literal(4)
+                                )
+                        ),
+                        "1 2 true ? 3 4 true ? true ?"
                 )
         );
     }
