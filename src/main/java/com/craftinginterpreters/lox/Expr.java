@@ -1,6 +1,6 @@
 package com.craftinginterpreters.lox;
 
-import java.util.List;
+import lombok.EqualsAndHashCode;
 
 /**
  * This file is generated automatically by the GenerateAst.java
@@ -13,6 +13,7 @@ abstract class Expr {
     R visitUnaryExpr(Unary expr);
     R visitTernaryExpr(Ternary expr);
   }
+  @EqualsAndHashCode
   static class Binary extends Expr {
     Binary(Expr left, Token operator, Expr right) {
       this.left = left;
@@ -28,6 +29,7 @@ abstract class Expr {
     final Token operator;
     final Expr right;
   }
+  @EqualsAndHashCode
   static class Grouping extends Expr {
     Grouping(Expr expression) {
       this.expression = expression;
@@ -39,6 +41,7 @@ abstract class Expr {
 
     final Expr expression;
   }
+  @EqualsAndHashCode
   static class Literal extends Expr {
     Literal(Object value) {
       this.value = value;
@@ -50,6 +53,7 @@ abstract class Expr {
 
     final Object value;
   }
+  @EqualsAndHashCode
   static class Unary extends Expr {
     Unary(Token operator, Expr right) {
       this.operator = operator;
@@ -63,6 +67,7 @@ abstract class Expr {
     final Token operator;
     final Expr right;
   }
+  @EqualsAndHashCode
   static class Ternary extends Expr {
     Ternary(Expr condition, Expr caseTrue, Expr caseFalse) {
       this.condition = condition;

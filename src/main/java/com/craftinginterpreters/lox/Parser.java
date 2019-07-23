@@ -28,7 +28,7 @@ class Parser {
 
     /**
      * Conditional (ternary) operator
-     * condtionalExpr → comma ("?" condtionalExpr ":" conditionalExpr)
+     * condtionalExpr → comma ("?" condtionalExpr ":" conditionalExpr)*
      * Has low(est?) precedence and is right-associative
      * As per https://en.wikipedia.org/wiki/%3F:
      */
@@ -91,7 +91,9 @@ class Parser {
 
     /**
      * unary → ( "!" | "-" ) unary
-     *       | primary ;
+     *       | primary
+     *       // TODO: Error productions for cases when a binary operation is missing a left operand
+     *       | ( "+" | "/"  | "*" ) unary ;
      */
     private Expr unary() {
         if (match(List.of(BANG, MINUS))) {
@@ -134,6 +136,10 @@ class Parser {
         return lhs;
     }
 
+    /**
+     * If current token matches given, consumes it and returns next token.
+     * Throws otherwise.
+     */
     private Token consume(TokenType type, String message) {
         if (check(type)) return advance();
 
@@ -168,10 +174,16 @@ class Parser {
         }
     }
 
+    /**
+     * Advances if current token matches any of given tokens
+     */
     private boolean match(Collection<TokenType> types) {
         return types.stream().anyMatch(this::match);
     }
 
+    /**
+     * Advances if current token matches given
+     */
     private boolean match(TokenType type) {
         if (check(type)) {
             advance();
@@ -180,6 +192,9 @@ class Parser {
         return false;
     }
 
+    /**
+     * Checks if current token is same as given token
+     */
     private boolean check(TokenType type) {
         if (isAtEnd()) return false;
         return peek().getType() == type;
@@ -194,10 +209,16 @@ class Parser {
         return peek().getType() == EOF;
     }
 
+    /**
+     * @return current token
+     */
     private Token peek() {
         return tokens.get(current);
     }
 
+    /**
+     * @return previous token
+     */
     private Token previous() {
         return tokens.get(current - 1);
     }

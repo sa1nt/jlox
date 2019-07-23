@@ -40,6 +40,7 @@ public class GenerateAst {
             writer.println("package com.craftinginterpreters.lox;");
             writer.println();
             writer.println("import java.util.List;");
+            writer.println("import lombok.EqualsAndHashCode;");
             writer.println();
             writer.println("/**");
             writer.println(" * This file is generated automatically by the GenerateAst.java");
@@ -75,6 +76,8 @@ public class GenerateAst {
     }
 
     private static void defineType(PrintWriter writer, String baseName, String className, String fieldList) {
+        // base Expr class isn't supposed to have a meaningful equals() for now
+        writer.println("  @EqualsAndHashCode(callSuper = false)");
         writer.printf("  static class %s extends %s {\n", className, baseName );
 
         // Constructor.
