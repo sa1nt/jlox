@@ -77,7 +77,11 @@ public class Interpreter implements Expr.Visitor<Object> {
                 return (double) lhs * (double) rhs;
             case SLASH:
                 checkNumberOperands(operatorToken, lhs, rhs);
-                return (double) lhs / (double) rhs;
+                double evalResult = (double) lhs / (double) rhs;
+                if (Double.isInfinite(evalResult)) {
+                    throw new LoxRuntimeError(operatorToken, "Division by zero");
+                }
+                return evalResult;
             default: throw new LoxRuntimeError(operatorToken, "Unexpected token");
         }
     }
