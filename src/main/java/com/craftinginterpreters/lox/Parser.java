@@ -92,7 +92,7 @@ class Parser {
     /**
      * unary → ( "!" | "-" ) unary
      *       | primary
-     *       // TODO: Error productions for cases when a binary operation is missing a left operand
+     *       // Error productions for cases when a binary operation is missing a left operand
      *       | ( "+" | "/"  | "*" ) unary ;
      */
     private Expr unary() {
@@ -100,6 +100,11 @@ class Parser {
             Token operator = previous();
             Expr right = unary();
             return new Expr.Unary(operator, right);
+        }
+
+        if (match(List.of(PLUS, SLASH, STAR))) {
+            Token previous = previous();
+            Lox.error(previous, "Not allowed as a unary operator");
         }
 
         return primary();
