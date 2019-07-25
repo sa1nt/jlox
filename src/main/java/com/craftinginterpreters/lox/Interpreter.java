@@ -67,8 +67,8 @@ public class Interpreter implements Expr.Visitor<Object> {
             case PLUS:
                 if (lhs instanceof Double && rhs instanceof Double) {
                     return (double) lhs + (double) rhs;
-                } else if (lhs instanceof String && rhs instanceof String) {
-                    return (String) lhs + (String) rhs;
+                } else if (lhs instanceof String || rhs instanceof String) {
+                    return stringify(lhs) + stringify(rhs);
                 } else {
                     throw new LoxRuntimeError(operatorToken, "Only Strings and Numbers are supported");
                 }
