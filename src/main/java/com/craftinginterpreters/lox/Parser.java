@@ -1,11 +1,33 @@
 package com.craftinginterpreters.lox;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Supplier;
 
 import static com.craftinginterpreters.lox.TokenType.*;
 
+/**
+ * program   → statement* EOF ;
+ *
+ * statement → exprStmt
+ *           | printStmt ;
+ *
+ * exprStmt  → expression ";" ;
+ * printStmt → "print" expression ";" ;
+ *
+ * expression     → conditionalExpr ;
+ * conditionalExpr → comma ("?" conditionalExpr ":" conditionalExpr)*
+ * comma          → equality ( "," equality )* ;
+ * equality       → comparison ( ( "!=" | "==" ) comparison )* ;
+ * comparison     → addition ( ( ">" | ">=" | "<" | "<=" ) addition )* ;
+ * addition       → multiplication ( ( "-" | "+" ) multiplication )* ;
+ * multiplication → unary ( ( "/" | "*" ) unary )* ;
+ * unary          → ( "!" | "-" ) unary
+ *                | primary ;
+ * primary        → NUMBER | STRING | "false" | "true" | "nil"
+ *                | "(" expression ")" ;
+ */
 class Parser {
     private final List<Token> tokens;
     private int current = 0;
@@ -14,21 +36,54 @@ class Parser {
         this.tokens = tokens;
     }
 
-    Expr parse() {
-        try {
-            return expression();
-        } catch (ParseError error) {
-            return null;
+    List<Stmt> parse() {
+        List<Stmt> statements = new ArrayList<>();
+        while (!isAtEnd()) {
+            statements.add(statement());
         }
+
+        return statements;
     }
 
+    /**
+     * statement → exprStmt
+     *           | printStmt ;
+     */
+    private Stmt statement() {
+        if (match(PRINT)) return finishPrintStatement();
+
+        return finishExpressionStatement();
+    }
+
+    /**
+     * printStmt → "print" expression ";" ;
+     * Note that "print" Token is consumed at {@code statement()}
+     */
+    private Stmt finishPrintStatement() {
+        Expr value = expression();
+        consume(SEMICOLON, "Expect ';' after value.");
+        return new Stmt.Print(value);
+    }
+
+    /**
+     * exprStmt  → expression ";" ;
+     */
+    private Stmt finishExpressionStatement() {
+        Expr expr = expression();
+        consume(SEMICOLON, "Expect ';' after expression.");
+        return new Stmt.Expression(expr);
+    }
+
+    /**
+     * expression     → conditionalExpr ; // aka ternary
+     */
     private Expr expression() {
         return conditionalExpr();
     }
 
     /**
      * Conditional (ternary) operator
-     * condtionalExpr → comma ("?" condtionalExpr ":" conditionalExpr)*
+     * conditionalExpr → comma ("?" conditionalExpr ":" conditionalExpr)*
      * Has low(est?) precedence and is right-associative
      * As per https://en.wikipedia.org/wiki/%3F:
      */

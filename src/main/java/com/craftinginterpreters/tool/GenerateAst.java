@@ -30,6 +30,11 @@ public class GenerateAst {
                 "Unary    : Token operator, Expr right",
                 "Ternary  : Expr condition, Expr caseTrue, Expr caseFalse"
         ));
+
+        defineAst(outputDirPath, "Stmt", Arrays.asList(
+                "Expression : Expr expression",
+                "Print      : Expr expression"
+        ));
     }
 
     private static void defineAst(Path outputDirPath, String baseName, List<String> types) throws IOException {
