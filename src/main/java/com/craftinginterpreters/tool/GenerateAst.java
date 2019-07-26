@@ -28,12 +28,14 @@ public class GenerateAst {
                 "Grouping : Expr expression",
                 "Literal  : Object value",
                 "Unary    : Token operator, Expr right",
-                "Ternary  : Expr condition, Expr caseTrue, Expr caseFalse"
+                "Ternary  : Expr condition, Expr caseTrue, Expr caseFalse",
+                "Variable : Token name"
         ));
 
         defineAst(outputDirPath, "Stmt", Arrays.asList(
                 "Expression : Expr expression",
-                "Print      : Expr expression"
+                "Print      : Expr expression",
+                "Var        : Token name, Expr initializer"
         ));
     }
 

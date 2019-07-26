@@ -8,13 +8,17 @@ import java.util.function.Supplier;
 import static com.craftinginterpreters.lox.TokenType.*;
 
 /**
- * program   → statement* EOF ;
+ * program     → declaration* EOF ;
+ *
+ * declaration → varDeclaration
+ *             | statement ;
  *
  * statement → exprStmt
  *           | printStmt ;
  *
  * exprStmt  → expression ";" ;
  * printStmt → "print" expression ";" ;
+ * varDeclaration → "var" IDENTIFIER ( "=" expression )? ";" ;
  *
  * expression     → conditionalExpr ;
  * conditionalExpr → comma ("?" conditionalExpr ":" conditionalExpr)*
@@ -23,10 +27,14 @@ import static com.craftinginterpreters.lox.TokenType.*;
  * comparison     → addition ( ( ">" | ">=" | "<" | "<=" ) addition )* ;
  * addition       → multiplication ( ( "-" | "+" ) multiplication )* ;
  * multiplication → unary ( ( "/" | "*" ) unary )* ;
- * unary          → ( "!" | "-" ) unary
- *                | primary ;
- * primary        → NUMBER | STRING | "false" | "true" | "nil"
- *                | "(" expression ")" ;
+ * unary → ( "!" | "-" ) unary
+ *       | primary
+ *       // Error productions for cases when a binary operation is missing a left operand
+ *       | ( "+" | "/"  | "*" ) unary ;
+ * primary → "true" | "false" | "nil"
+ *         | NUMBER | STRING
+ *         | "(" expression ")"
+ *         | IDENTIFIER ;
  */
 class Parser {
     private final List<Token> tokens;
@@ -39,10 +47,25 @@ class Parser {
     List<Stmt> parse() {
         List<Stmt> statements = new ArrayList<>();
         while (!isAtEnd()) {
-            statements.add(statement());
+            statements.add(declaration());
         }
 
         return statements;
+    }
+
+    /**
+     * declaration → varDeclaration
+     *             | statement ;
+     */
+    private Stmt declaration() {
+        try {
+            if (match(VAR)) return finishVarDeclaration();
+
+            return statement();
+        } catch (ParseError error) {
+            synchronize();
+            return null;
+        }
     }
 
     /**
@@ -63,6 +86,21 @@ class Parser {
         Expr value = expression();
         consume(SEMICOLON, "Expect ';' after value.");
         return new Stmt.Print(value);
+    }
+
+    /**
+     * varDeclaration → "var" IDENTIFIER ( "=" expression )? ";" ;
+     */
+    private Stmt finishVarDeclaration() {
+        Token name = consume(IDENTIFIER, "Expect variable name.");
+
+        Expr initializer = null;
+        if (match(EQUAL)) {
+            initializer = expression();
+        }
+
+        consume(SEMICOLON, "Expect ';' after variable declaration.");
+        return new Stmt.Var(name, initializer);
     }
 
     /**
@@ -166,8 +204,10 @@ class Parser {
     }
 
     /**
-     * primary → NUMBER | STRING | "false" | "true" | "nil"
-     *         | "(" expression ")" ;
+     * primary → "true" | "false" | "nil"
+     *         | NUMBER | STRING
+     *         | "(" expression ")"
+     *         | IDENTIFIER ;
      */
     private Expr primary() {
         if (match(FALSE)) return new Expr.Literal(false);
@@ -176,6 +216,10 @@ class Parser {
 
         if (match(List.of(NUMBER, STRING))) {
             return new Expr.Literal(previous().getLiteral());
+        }
+
+        if (match(IDENTIFIER)) {
+            return new Expr.Variable(previous());
         }
 
         if (match(LEFT_PAREN)) {

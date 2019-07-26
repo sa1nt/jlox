@@ -35,4 +35,9 @@ public class RpnPrinter implements Expr.Visitor<String> {
         return expr.caseTrue.accept(this) + " " + expr.caseFalse.accept(this) + " " +
                 expr.condition.accept(this) + " ?";
     }
+
+    @Override
+    public String visitVariableExpr(Variable expr) {
+        return expr.name.getLexeme();
+    }
 }

@@ -13,6 +13,7 @@ abstract class Expr {
     R visitLiteralExpr(Literal expr);
     R visitUnaryExpr(Unary expr);
     R visitTernaryExpr(Ternary expr);
+    R visitVariableExpr(Variable expr);
   }
   @EqualsAndHashCode(callSuper = false)
   static class Binary extends Expr {
@@ -83,6 +84,18 @@ abstract class Expr {
     final Expr condition;
     final Expr caseTrue;
     final Expr caseFalse;
+  }
+  @EqualsAndHashCode(callSuper = false)
+  static class Variable extends Expr {
+    Variable(Token name) {
+      this.name = name;
+    }
+
+    <R> R accept(Visitor<R> visitor) {
+      return visitor.visitVariableExpr(this);
+    }
+
+    final Token name;
   }
 
   abstract <R> R accept(Visitor<R> visitor);
