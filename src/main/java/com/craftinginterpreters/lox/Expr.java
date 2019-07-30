@@ -8,12 +8,27 @@ import lombok.EqualsAndHashCode;
  */
 abstract class Expr {
   interface Visitor<R> {
+    R visitAssignExpr(Assign expr);
     R visitBinaryExpr(Binary expr);
     R visitGroupingExpr(Grouping expr);
     R visitLiteralExpr(Literal expr);
     R visitUnaryExpr(Unary expr);
     R visitTernaryExpr(Ternary expr);
     R visitVariableExpr(Variable expr);
+  }
+  @EqualsAndHashCode(callSuper = false)
+  static class Assign extends Expr {
+    Assign(Token name, Expr value) {
+      this.name = name;
+      this.value = value;
+    }
+
+    <R> R accept(Visitor<R> visitor) {
+      return visitor.visitAssignExpr(this);
+    }
+
+    final Token name;
+    final Expr value;
   }
   @EqualsAndHashCode(callSuper = false)
   static class Binary extends Expr {

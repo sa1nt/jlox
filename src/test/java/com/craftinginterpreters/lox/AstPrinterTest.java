@@ -6,6 +6,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.stream.Stream;
 
+import static com.craftinginterpreters.lox.TokenType.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
@@ -23,7 +24,7 @@ class AstPrinterTest {
                 Arguments.arguments(
                         new Expr.Binary(
                                 new Expr.Literal(1),
-                                new Token(TokenType.SLASH, "/", null, 1),
+                                new Token(SLASH, "/", null, 1),
                                 new Expr.Literal(2)
                         ),
                         "(/ 1 2)"
@@ -31,10 +32,10 @@ class AstPrinterTest {
                 Arguments.arguments(
                         new Expr.Binary(
                                 new Expr.Unary(
-                                        new Token(TokenType.MINUS, "-", null, 1),
+                                        new Token(MINUS, "-", null, 1),
                                         new Expr.Literal(123)
                                 ),
-                                new Token(TokenType.STAR, "*", null, 1),
+                                new Token(STAR, "*", null, 1),
                                 new Expr.Grouping(
                                         new Expr.Literal(45.67)
                                 )
@@ -68,6 +69,13 @@ class AstPrinterTest {
                                 )
                         ),
                         "(if true (if true 1 2) (if true 3 4))"
+                ),
+                Arguments.arguments(
+                        new Expr.Assign(
+                                new Token(IDENTIFIER, "varName", null, 1),
+                                new Expr.Literal(true)
+                        ),
+                        "(= varName true)"
                 )
         );
     }

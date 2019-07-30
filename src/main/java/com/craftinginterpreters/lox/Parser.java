@@ -20,9 +20,14 @@ import static com.craftinginterpreters.lox.TokenType.*;
  * printStmt → "print" expression ";" ;
  * varDeclaration → "var" IDENTIFIER ( "=" expression )? ";" ;
  *
- * expression     → conditionalExpr ;
- * conditionalExpr → comma ("?" conditionalExpr ":" conditionalExpr)*
- * comma          → equality ( "," equality )* ;
+ * See also https://en.cppreference.com/w/c/language/operator_precedence for
+ * inspiration
+ *
+ * expression     → comma ;
+ * comma          → assignment ( "," assignment )* ;
+ * assignment     → IDENTIFIER "=" assignment
+ *                | conditionalExpr;
+ * conditionalExpr → equality ("?" conditionalExpr ":" conditionalExpr)* ;
  * equality       → comparison ( ( "!=" | "==" ) comparison )* ;
  * comparison     → addition ( ( ">" | ">=" | "<" | "<=" ) addition )* ;
  * addition       → multiplication ( ( "-" | "+" ) multiplication )* ;
@@ -113,20 +118,52 @@ class Parser {
     }
 
     /**
-     * expression     → conditionalExpr ; // aka ternary
+     * expression     → comma ;
      */
     private Expr expression() {
-        return conditionalExpr();
+        return comma();
+    }
+
+    /**
+     * comma → assignment ( "," assignment )* ;
+     */
+    private Expr comma() {
+        Expr expr = assignment();
+        expr = parseLeftAssociativeSeries(expr, List.of(COMMA), this::assignment);
+        return expr;
+    }
+
+    /**
+     * assignment     → IDENTIFIER "=" assignment
+     *                | conditionalExpr;
+     */
+    private Expr assignment() {
+        Expr expr = conditionalExpr();
+
+        if (match(EQUAL)) {
+            Token equals = previous();
+            Expr value = assignment();
+
+            if (expr instanceof Expr.Variable) {
+                Token name = ((Expr.Variable)expr).name;
+                return new Expr.Assign(name, value);
+            }
+
+            //noinspection ThrowableNotThrown
+            error(equals, "Invalid assignment target.");
+        }
+
+        return expr;
     }
 
     /**
      * Conditional (ternary) operator
-     * conditionalExpr → comma ("?" conditionalExpr ":" conditionalExpr)*
-     * Has low(est?) precedence and is right-associative
+     * conditionalExpr → equality ("?" conditionalExpr ":" conditionalExpr)* ;
+     * Has low precedence and is right-associative
      * As per https://en.wikipedia.org/wiki/%3F:
      */
     private Expr conditionalExpr() {
-        Expr condition = comma();
+        Expr condition = equality();
         if (match(QUESTION)) {
             Expr caseTrue = conditionalExpr();
             if (match(COLON)) {
@@ -135,15 +172,6 @@ class Parser {
             }
         }
         return condition;
-    }
-
-    /**
-     * comma → equality ( "," equality )* ;
-     */
-    private Expr comma() {
-        Expr expr = equality();
-        expr = parseLeftAssociativeSeries(expr, List.of(COMMA), this::equality);
-        return expr;
     }
 
     /**
