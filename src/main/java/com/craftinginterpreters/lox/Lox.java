@@ -7,9 +7,10 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 
 public class Lox {
-    private static boolean hadError = false;
+    private static boolean hadParseError = false;
     private static boolean hadRuntimeError = false;
     private static final Interpreter interpreter = new Interpreter();
 
@@ -30,8 +31,11 @@ public class Lox {
 
     private static void runFile(String path) throws IOException {
         byte[] bytes = Files.readAllBytes(Paths.get(path));
-        run(new String(bytes, Charset.defaultCharset()));
-        if (hadError) System.exit(65);
+
+        List<Stmt> parseResult = parse(new String(bytes, Charset.defaultCharset()));
+        if (hadParseError) System.exit(65);
+
+        interpreter.interpret(parseResult);
         if (hadRuntimeError) System.exit(70);
     }
 
@@ -41,27 +45,32 @@ public class Lox {
 
         for (;;) {
             System.out.print("> ");
-            run(reader.readLine());
-            hadError = false;
+            List<Stmt> parseResult = parse(reader.readLine());
+            interpretInRepl(parseResult);
+            hadParseError = false;
         }
     }
 
-    private static void run(String source) {
+    private static List<Stmt> parse(String source) {
         Scanner scanner = new Scanner(source);
         List<Token> tokens = scanner.scanTokens();
 
         Parser parser = new Parser(tokens);
-        List<Stmt> statements = parser.parse();
 
+        return parser.parse();
+    }
+
+    private static void interpretInRepl(List<Stmt> parseResult) {
         // Stop if there was a syntax error.
-        if (hadError) return;
+        if (hadParseError) return;
 
-        interpreter.interpret(statements);
+        printLastStatement(parseResult);
+        interpreter.interpret(parseResult);
     }
 
     private static void report(int line, String where, String message) {
         System.err.println("[line " + line + "] Error" + where + ": " + message);
-        hadError = true;
+        hadParseError = true;
     }
 
     static void error(Token token, String message) {
@@ -75,5 +84,28 @@ public class Lox {
     static void runtimeError(LoxRuntimeError error) {
         System.err.println(error.getMessage() + "[line " + error.token.getLine() + "]");
         hadRuntimeError = true;
+    }
+
+    private static void printLastStatement(List<Stmt> statements) {
+        getLastInputStatement(statements)
+                .filter(Stmt.Expression.class::isInstance)
+                .map(Stmt.Expression.class::cast)
+                .map(exprStmt -> new Stmt.Print(exprStmt.expression))
+                .ifPresent(printStmt -> replaceLastStmt(statements, printStmt));
+    }
+
+    private static Optional<Stmt> getLastInputStatement(List<Stmt> statements) {
+        return getLastElemIndex(statements).map(statements::get);
+    }
+
+    private static void replaceLastStmt(List<Stmt> statements, Stmt stmt) {
+        getLastElemIndex(statements)
+                .ifPresent(lastIdx -> statements.set(lastIdx, stmt));
+    }
+
+    private static Optional<Integer> getLastElemIndex(List<Stmt> statements) {
+        return statements.isEmpty() ?
+                Optional.empty() :
+                Optional.of(statements.size() - 1);
     }
 }
