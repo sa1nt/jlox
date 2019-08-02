@@ -5,7 +5,7 @@ import java.util.Objects;
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 
-    private Environment environment = new Environment();
+    private Environment currentEnvironment = new RootEnvironment();
 
     void interpret(List<Stmt> statements) {
         try {
@@ -15,6 +15,12 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
         } catch (LoxRuntimeError error) {
             Lox.runtimeError(error);
         }
+    }
+
+    @Override
+    public Void visitBlockStmt(Stmt.Block stmt) {
+        executeBlock(stmt.statements, new ChildEnvironment(currentEnvironment));
+        return null;
     }
 
     @Override
@@ -37,7 +43,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
             value = evaluate(stmt.initializer);
         }
 
-        environment.define(stmt.name.getLexeme(), value);
+        currentEnvironment.define(stmt.name.getLexeme(), value);
         return null;
     }
 
@@ -45,7 +51,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
     public Object visitAssignExpr(Expr.Assign expr) {
         Object value = evaluate(expr.value);
 
-        environment.assign(expr.name, value);
+        currentEnvironment.assign(expr.name, value);
         return value;
     }
 
@@ -75,7 +81,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 
     @Override
     public Object visitVariableExpr(Expr.Variable expr) {
-        return environment.get(expr.name);
+        return currentEnvironment.get(expr.name);
     }
 
     @Override
@@ -169,6 +175,19 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 
     private void execute(Stmt stmt) {
         stmt.accept(this);
+    }
+
+    private void executeBlock(List<Stmt> statements, Environment environment) {
+        Environment previous = this.currentEnvironment;
+        try {
+            this.currentEnvironment = environment;
+
+            for (Stmt statement : statements) {
+                execute(statement);
+            }
+        } finally {
+            this.currentEnvironment = previous;
+        }
     }
 
     private String stringify(Object object) {

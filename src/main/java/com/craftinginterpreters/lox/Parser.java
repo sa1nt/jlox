@@ -14,7 +14,10 @@ import static com.craftinginterpreters.lox.TokenType.*;
  *             | statement ;
  *
  * statement → exprStmt
- *           | printStmt ;
+ *           | printStmt
+ *           | block ;
+ *
+ * block     → "{" declaration* "}" ;
  *
  * exprStmt  → expression ";" ;
  * printStmt → "print" expression ";" ;
@@ -75,10 +78,12 @@ class Parser {
 
     /**
      * statement → exprStmt
-     *           | printStmt ;
+     *           | printStmt
+     *           | block ;
      */
     private Stmt statement() {
         if (match(PRINT)) return finishPrintStatement();
+        if (match(LEFT_BRACE)) return new Stmt.Block(finishBlockStatement());
 
         return finishExpressionStatement();
     }
@@ -115,6 +120,20 @@ class Parser {
         Expr expr = expression();
         consume(SEMICOLON, "Expect ';' after expression.");
         return new Stmt.Expression(expr);
+    }
+
+    /**
+     * block     → "{" declaration* "}" ;
+     */
+    private List<Stmt> finishBlockStatement() {
+        List<Stmt> statements = new ArrayList<>();
+
+        while (!check(RIGHT_BRACE) && !isAtEnd()) {
+            statements.add(declaration());
+        }
+
+        consume(RIGHT_BRACE, "Expect '}' after block.");
+        return statements;
     }
 
     /**
