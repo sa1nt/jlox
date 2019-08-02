@@ -139,7 +139,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
     }
 
     @Override
-    public Object visitTernaryExpr(Expr.Ternary expr) {
+    public Object visitConditionalExpr(Expr.Conditional expr) {
         Object evalCondition = evaluate(expr.condition);
         return isTruthy(evalCondition) ? evaluate(expr.caseTrue) : evaluate(expr.caseFalse);
     }

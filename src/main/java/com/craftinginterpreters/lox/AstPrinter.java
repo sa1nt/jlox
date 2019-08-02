@@ -32,7 +32,7 @@ public class AstPrinter implements Expr.Visitor<String> {
     }
 
     @Override
-    public String visitTernaryExpr(Expr.Ternary expr) {
+    public String visitConditionalExpr(Expr.Conditional expr) {
         return parenthesize("if", expr.condition, expr.caseTrue, expr.caseFalse);
     }
 

@@ -43,10 +43,10 @@ class AstPrinterTest {
                         "(* (- 123) (group 45.67))"
                 ),
                 Arguments.arguments(
-                        new Expr.Ternary(
+                        new Expr.Conditional(
                                 new Expr.Literal(true),
                                 new Expr.Literal(1),
-                                new Expr.Ternary(
+                                new Expr.Conditional(
                                         new Expr.Literal(true),
                                         new Expr.Literal(2),
                                         new Expr.Literal(3)
@@ -55,14 +55,14 @@ class AstPrinterTest {
                         "(if true 1 (if true 2 3))"
                 ),
                 Arguments.arguments(
-                        new Expr.Ternary(
+                        new Expr.Conditional(
                                 new Expr.Literal(true),
-                                new Expr.Ternary(
+                                new Expr.Conditional(
                                         new Expr.Literal(true),
                                         new Expr.Literal(1),
                                         new Expr.Literal(2)
                                 ),
-                                new Expr.Ternary(
+                                new Expr.Conditional(
                                         new Expr.Literal(true),
                                         new Expr.Literal(3),
                                         new Expr.Literal(4)

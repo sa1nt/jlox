@@ -36,7 +36,7 @@ public class RpnPrinter implements Expr.Visitor<String> {
     }
 
     @Override
-    public String visitTernaryExpr(Ternary expr) {
+    public String visitConditionalExpr(Conditional expr) {
         return expr.caseTrue.accept(this) + " " + expr.caseFalse.accept(this) + " " +
                 expr.condition.accept(this) + " ?";
     }

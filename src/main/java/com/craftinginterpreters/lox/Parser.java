@@ -187,7 +187,7 @@ class Parser {
             Expr caseTrue = conditionalExpr();
             if (match(COLON)) {
                 Expr caseFalse = conditionalExpr();
-                return new Expr.Ternary(condition, caseTrue, caseFalse);
+                return new Expr.Conditional(condition, caseTrue, caseFalse);
             }
         }
         return condition;

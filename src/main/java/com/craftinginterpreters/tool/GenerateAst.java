@@ -24,13 +24,13 @@ public class GenerateAst {
         }
 
         defineAst(outputDirPath, "Expr", Arrays.asList(
-                "Assign   : Token name, Expr value",
-                "Binary   : Expr left, Token operator, Expr right",
-                "Grouping : Expr expression",
-                "Literal  : Object value",
-                "Unary    : Token operator, Expr right",
-                "Ternary  : Expr condition, Expr caseTrue, Expr caseFalse",
-                "Variable : Token name"
+                "Assign         : Token name, Expr value",
+                "Binary         : Expr left, Token operator, Expr right",
+                "Grouping       : Expr expression",
+                "Literal        : Object value",
+                "Unary          : Token operator, Expr right",
+                "Conditional    : Expr condition, Expr caseTrue, Expr caseFalse",
+                "Variable       : Token name"
         ));
 
         defineAst(outputDirPath, "Stmt", Arrays.asList(

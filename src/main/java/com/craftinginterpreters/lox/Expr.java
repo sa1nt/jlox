@@ -13,7 +13,7 @@ abstract class Expr {
     R visitGroupingExpr(Grouping expr);
     R visitLiteralExpr(Literal expr);
     R visitUnaryExpr(Unary expr);
-    R visitTernaryExpr(Ternary expr);
+    R visitConditionalExpr(Conditional expr);
     R visitVariableExpr(Variable expr);
   }
   @EqualsAndHashCode(callSuper = false)
@@ -85,15 +85,15 @@ abstract class Expr {
     final Expr right;
   }
   @EqualsAndHashCode(callSuper = false)
-  static class Ternary extends Expr {
-    Ternary(Expr condition, Expr caseTrue, Expr caseFalse) {
+  static class Conditional extends Expr {
+    Conditional(Expr condition, Expr caseTrue, Expr caseFalse) {
       this.condition = condition;
       this.caseTrue = caseTrue;
       this.caseFalse = caseFalse;
     }
 
     <R> R accept(Visitor<R> visitor) {
-      return visitor.visitTernaryExpr(this);
+      return visitor.visitConditionalExpr(this);
     }
 
     final Expr condition;
