@@ -38,10 +38,11 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 
     @Override
     public Void visitVarStmt(Stmt.Var stmt) {
-        Object value = null;
-        if (stmt.initializer != null) {
-            value = evaluate(stmt.initializer);
-        }
+        Expr initializer = stmt.initializer;
+
+        Object value = Objects.nonNull(initializer) ?
+                evaluate(initializer) :
+                VariableUninitialized.UNINITIALIZED;
 
         currentEnvironment.define(stmt.name.getLexeme(), value);
         return null;
@@ -81,7 +82,12 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 
     @Override
     public Object visitVariableExpr(Expr.Variable expr) {
-        return currentEnvironment.get(expr.name);
+        Token variableName = expr.name;
+        Object value = currentEnvironment.get(variableName);
+        if (value == VariableUninitialized.UNINITIALIZED) {
+            throw new LoxRuntimeError(variableName, "Uninitialized variable ");
+        }
+        return value;
     }
 
     @Override
@@ -203,5 +209,13 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
         }
 
         return object.toString();
+    }
+
+    /**
+     * Used to mark variables as defined but not initialized and throw error in case such variable is used in a
+     * Statement.
+     */
+    enum VariableUninitialized {
+        UNINITIALIZED
     }
 }
