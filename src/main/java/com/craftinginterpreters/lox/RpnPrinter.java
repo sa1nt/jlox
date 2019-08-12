@@ -31,6 +31,11 @@ public class RpnPrinter implements Expr.Visitor<String> {
     }
 
     @Override
+    public String visitLogicalExpr(Logical expr) {
+        return expr.left.accept(this) + " " + expr.right.accept(this) + expr.operator.getLexeme();
+    }
+
+    @Override
     public String visitUnaryExpr(Unary expr) {
         return expr.right.accept(this) + " " + expr.operator.getLexeme();
     }

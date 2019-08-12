@@ -17,7 +17,7 @@ class Token {
         this.line = line;
     }
 
-    public TokenType getType() {
+    TokenType getType() {
         return type;
     }
 
@@ -29,7 +29,7 @@ class Token {
         return literal;
     }
 
-    public int getLine() {
+    int getLine() {
         return line;
     }
 

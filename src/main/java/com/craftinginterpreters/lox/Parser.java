@@ -200,12 +200,12 @@ class Parser {
 
     /**
      * Conditional (ternary) operator
-     * conditionalExpr → equality ("?" conditionalExpr ":" conditionalExpr)* ;
+     * conditionalExpr → logic_or ("?" conditionalExpr ":" conditionalExpr)* ;
      * Has low precedence and is right-associative
      * As per https://en.wikipedia.org/wiki/%3F:
      */
     private Expr conditionalExpr() {
-        Expr condition = equality();
+        Expr condition = logic_or();
         if (match(QUESTION)) {
             Expr caseTrue = conditionalExpr();
             if (match(COLON)) {
@@ -214,6 +214,36 @@ class Parser {
             }
         }
         return condition;
+    }
+
+    /**
+     * logic_or           → logic_and ( "or" logic_and )* ;
+     */
+    private Expr logic_or() {
+        Expr expr = logic_and();
+
+        while (match(OR)) {
+            Token operator = previous();
+            Expr right = logic_and();
+            expr = new Expr.Logical(expr, operator, right);
+        }
+
+        return expr;
+    }
+
+    /**
+     * logic_and          → equality ( "and" equality )* ;
+     */
+    private Expr logic_and() {
+        Expr expr = equality();
+
+        while (match(AND)) {
+            Token operator = previous();
+            Expr right = equality();
+            expr = new Expr.Logical(expr, operator, right);
+        }
+
+        return expr;
     }
 
     /**
