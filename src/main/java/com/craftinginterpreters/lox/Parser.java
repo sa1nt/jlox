@@ -14,8 +14,11 @@ import static com.craftinginterpreters.lox.TokenType.*;
  *             | statement ;
  *
  * statement → exprStmt
+ *           | ifStmt
  *           | printStmt
  *           | block ;
+ *
+ * ifStmt    → "if" "(" expression ")" statement ( "else" statement )? ;
  *
  * block     → "{" declaration* "}" ;
  *
@@ -26,15 +29,17 @@ import static com.craftinginterpreters.lox.TokenType.*;
  * See also https://en.cppreference.com/w/c/language/operator_precedence for
  * inspiration
  *
- * expression     → comma ;
- * comma          → assignment ( "," assignment )* ;
- * assignment     → IDENTIFIER "=" assignment
- *                | conditionalExpr;
- * conditionalExpr → equality ("?" conditionalExpr ":" conditionalExpr)* ;
- * equality       → comparison ( ( "!=" | "==" ) comparison )* ;
- * comparison     → addition ( ( ">" | ">=" | "<" | "<=" ) addition )* ;
- * addition       → multiplication ( ( "-" | "+" ) multiplication )* ;
- * multiplication → unary ( ( "/" | "*" ) unary )* ;
+ * expression         → comma ;
+ * comma              → assignment ( "," assignment )* ;
+ * assignment         → IDENTIFIER "=" assignment
+ *                    | conditionalExpr;
+ * conditionalExpr    → logic_or ("?" conditionalExpr ":" conditionalExpr)* ;
+ * logic_or           → logic_and ( "or" logic_and )* ;
+ * logic_and          → equality ( "and" equality )* ;
+ * equality           → comparison ( ( "!=" | "==" ) comparison )* ;
+ * comparison         → addition ( ( ">" | ">=" | "<" | "<=" ) addition )* ;
+ * addition           → multiplication ( ( "-" | "+" ) multiplication )* ;
+ * multiplication     → unary ( ( "/" | "*" ) unary )* ;
  * unary → ( "!" | "-" ) unary
  *       | primary
  *       // Error productions for cases when a binary operation is missing a left operand
@@ -78,14 +83,32 @@ class Parser {
 
     /**
      * statement → exprStmt
+     *           | ifStmt
      *           | printStmt
      *           | block ;
      */
     private Stmt statement() {
+        if (match(IF)) return finishIfStatement();
         if (match(PRINT)) return finishPrintStatement();
         if (match(LEFT_BRACE)) return new Stmt.Block(finishBlockStatement());
 
         return finishExpressionStatement();
+    }
+
+    /**
+     * ifStmt    → "if" "(" expression ")" statement ( "else" statement )? ;
+     */
+    private Stmt finishIfStatement() {
+        consume(LEFT_PAREN, "Expect '(' after 'if'.");
+        Expr condition = expression();
+        consume(RIGHT_PAREN, "Expect ')' after if condition.");
+
+        Stmt thenBranch = statement();
+        Stmt elseBranch = null;
+        if (match(ELSE)) {
+            elseBranch = statement();
+        }
+        return new Stmt.If(condition, thenBranch, elseBranch);
     }
 
     /**
