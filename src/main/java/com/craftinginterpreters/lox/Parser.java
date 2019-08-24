@@ -16,6 +16,7 @@ import static com.craftinginterpreters.lox.TokenType.*;
  * statement → exprStmt
  *           | ifStmt
  *           | printStmt
+ *           | whileStmt
  *           | block ;
  *
  * ifStmt    → "if" "(" expression ")" statement ( "else" statement )? ;
@@ -24,6 +25,7 @@ import static com.craftinginterpreters.lox.TokenType.*;
  *
  * exprStmt  → expression ";" ;
  * printStmt → "print" expression ";" ;
+ * whileStmt → "while" "(" expression ")" statement ;
  * varDeclaration → "var" IDENTIFIER ( "=" expression )? ";" ;
  *
  * See also https://en.cppreference.com/w/c/language/operator_precedence for
@@ -85,11 +87,13 @@ class Parser {
      * statement → exprStmt
      *           | ifStmt
      *           | printStmt
+     *           | whileStmt
      *           | block ;
      */
     private Stmt statement() {
         if (match(IF)) return finishIfStatement();
         if (match(PRINT)) return finishPrintStatement();
+        if (match(WHILE)) return finishWhileStatement();
         if (match(LEFT_BRACE)) return new Stmt.Block(finishBlockStatement());
 
         return finishExpressionStatement();
@@ -119,6 +123,18 @@ class Parser {
         Expr value = expression();
         consume(SEMICOLON, "Expect ';' after value.");
         return new Stmt.Print(value);
+    }
+
+    /**
+     * whileStmt → "while" "(" expression ")" statement ;
+     */
+    private Stmt finishWhileStatement() {
+        consume(LEFT_PAREN, "Expect '(' after 'while'.");
+        Expr condition = expression();
+        consume(RIGHT_PAREN, "Expect ')' after condition.");
+        Stmt body = statement();
+
+        return new Stmt.While(condition, body);
     }
 
     /**
