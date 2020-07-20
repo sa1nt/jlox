@@ -54,6 +54,8 @@ import static com.craftinginterpreters.lox.TokenType.*;
  */
 class Parser {
     private final List<Token> tokens;
+    private boolean expectBreak = false;
+
     private int current = 0;
 
     Parser(List<Token> tokens) {
@@ -93,11 +95,20 @@ class Parser {
      *           | block ;
      */
     private Stmt statement() {
-        if (match(FOR)) return forStatement();
+        if (match(FOR)) return finishForStatement();
         if (match(IF)) return finishIfStatement();
         if (match(PRINT)) return finishPrintStatement();
         if (match(WHILE)) return finishWhileStatement();
         if (match(LEFT_BRACE)) return new Stmt.Block(finishBlockStatement());
+
+        if (match(BREAK)) {
+            if (expectBreak) {
+                consume(SEMICOLON, "Expected ';' after break");
+                return new Stmt.Break();
+            } else {
+                throw error(previous(), "break; statement allowed only inside a loop");
+            }
+        }
 
         return finishExpressionStatement();
     }
@@ -109,7 +120,7 @@ class Parser {
      *
      * The idea is to desugar a for loop Statement into a while loop
      */
-    private Stmt forStatement() {
+    private Stmt finishForStatement() {
         consume(LEFT_PAREN, "Expect '(' after 'for'.");
 
         Stmt initializer;
@@ -133,7 +144,16 @@ class Parser {
         }
         consume(RIGHT_PAREN, "Expect ')' after for clauses.");
 
+        // expectBreak should be false if this loop has no loops wrapping it
+        boolean outerLoop = !this.expectBreak;
+        if (outerLoop) this.expectBreak = true;
+
         Stmt body = statement();
+
+        // stop expecting break; statements when not in a loop
+        if (outerLoop) {
+            this.expectBreak = false;
+        }
 
         if (increment != null) {
             body = new Stmt.Block(Arrays.asList(
@@ -185,8 +205,17 @@ class Parser {
         consume(LEFT_PAREN, "Expect '(' after 'while'.");
         Expr condition = expression();
         consume(RIGHT_PAREN, "Expect ')' after condition.");
+
+        // expectBreak should be false if this loop has no loops wrapping it
+        boolean outerLoop = !this.expectBreak;
+        if (outerLoop) this.expectBreak = true;
+
         Stmt body = statement();
 
+        // stop expecting break; statements when not in a loop
+        if (outerLoop) {
+            this.expectBreak = false;
+        }
         return new Stmt.While(condition, body);
     }
 

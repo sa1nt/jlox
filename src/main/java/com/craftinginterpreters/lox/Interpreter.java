@@ -60,10 +60,21 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
 
     @Override
     public Void visitWhileStmt(Stmt.While stmt) {
-        while (isTruthy(evaluate(stmt.condition))) {
-            execute(stmt.body);
+        try {
+            while (isTruthy(evaluate(stmt.condition))) {
+                execute(stmt.body);
+            }
+        } catch (BreakEncounter be) {
+            System.err.println("BreakEncounter caught");
         }
         return null;
+    }
+
+    //TODO: get rid of this abomination some time
+    @Override
+    public Void visitBreakStmt(Stmt.Break stmt) {
+        System.err.println("Encountered a break. Throwing");
+        throw new BreakEncounter();
     }
 
     @Override
@@ -250,4 +261,6 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void>{
     enum VariableUninitialized {
         UNINITIALIZED
     }
+
+    private static class BreakEncounter extends RuntimeException {}
 }

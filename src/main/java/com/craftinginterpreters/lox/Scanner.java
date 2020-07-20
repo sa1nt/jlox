@@ -30,6 +30,7 @@ class Scanner {
         keywords.put("true",   TRUE);
         keywords.put("var",    VAR);
         keywords.put("while",  WHILE);
+        keywords.put("break",  BREAK);
     }
 
     private final String source;
@@ -181,7 +182,7 @@ class Scanner {
     }
 
     /**
-     * Returns the nexr char (at {@code this.current + 1}) without advancing
+     * Returns the next char (at {@code this.current + 1}) without advancing
      */
     private char peekNext() {
         if (current + 1 >= source.length()) return '\0';

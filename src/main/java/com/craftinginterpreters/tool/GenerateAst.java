@@ -40,11 +40,12 @@ public class GenerateAst {
                 "If         : Expr condition, Stmt thenBranch, Stmt elseBranch",
                 "Print      : Expr expression",
                 "While      : Expr condition, Stmt body",
-                "Var        : Token name, Expr initializer"
+                "Var        : Token name, Expr initializer",
+                "Break      : "
         ));
     }
 
-    private static void defineAst(Path outputDirPath, String baseName, List<String> types) throws IOException {
+    private static void defineAst(Path outputDirPath, String baseName, List<String> typeDefinitions) throws IOException {
         Path classFilePath = outputDirPath.resolve(baseName + ".java");
         try (PrintWriter writer = new PrintWriter(
                 Files.newOutputStream(classFilePath), false, StandardCharsets.UTF_8)) {
@@ -59,12 +60,13 @@ public class GenerateAst {
             writer.println(" */");
             writer.printf("abstract class %s {\n", baseName);
 
-            defineVisitor(writer, baseName, types);
+            defineVisitor(writer, baseName, typeDefinitions);
 
             // The AST classes.
-            for (String type : types) {
-                String className = type.split(":")[0].trim();
-                String fields = type.split(":")[1].trim();
+            for (String typeDef : typeDefinitions) {
+                String[] split = typeDef.split(":");
+                String className = split[0].trim();
+                String fields = split.length > 1 ? split[1].trim() : "";
                 defineType(writer, baseName, className, fields);
             }
 
@@ -95,11 +97,16 @@ public class GenerateAst {
         // Constructor.
         writer.printf("    %s(%s) {\n", className, fieldList);
 
-        // Store parameters in fields.
-        String[] fields = fieldList.split(", ");
-        for (String field : fields) {
-            String name = field.split(" ")[1];
-            writer.printf("      this.%s = %s;\n", name, name);
+        String[] fields;
+        if (fieldList.length() > 0) {
+            // Store parameters in fields.
+            fields = fieldList.split(", ");
+            for (String field : fields) {
+                String name = field.split(" ")[1];
+                writer.printf("      this.%s = %s;\n", name, name);
+            }
+        } else {
+            fields = new String[0];
         }
 
         writer.println("    }");

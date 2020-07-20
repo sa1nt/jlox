@@ -14,6 +14,7 @@ abstract class Stmt {
     R visitPrintStmt(Print stmt);
     R visitWhileStmt(While stmt);
     R visitVarStmt(Var stmt);
+    R visitBreakStmt(Break stmt);
   }
   @EqualsAndHashCode(callSuper = false)
   static class Block extends Stmt {
@@ -94,6 +95,16 @@ abstract class Stmt {
 
     final Token name;
     final Expr initializer;
+  }
+  @EqualsAndHashCode(callSuper = false)
+  static class Break extends Stmt {
+    Break() {
+    }
+
+    <R> R accept(Visitor<R> visitor) {
+      return visitor.visitBreakStmt(this);
+    }
+
   }
 
   abstract <R> R accept(Visitor<R> visitor);
