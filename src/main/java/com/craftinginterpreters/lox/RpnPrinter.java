@@ -2,6 +2,11 @@ package com.craftinginterpreters.lox;
 
 import com.craftinginterpreters.lox.Expr.*;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
  * Prints {@code Expr} in Reverse Polish Notation
  */
@@ -49,5 +54,15 @@ public class RpnPrinter implements Expr.Visitor<String> {
     @Override
     public String visitVariableExpr(Variable expr) {
         return expr.name.getLexeme();
+    }
+
+    @Override
+    public String visitCallExpr(Call expr) {
+        List<Expr> reverseArgs = new ArrayList<>(expr.arguments);
+        Collections.reverse(reverseArgs);
+
+        return reverseArgs.stream()
+                .map(argExpr -> argExpr.accept(this))
+                .collect(Collectors.joining(",", "", expr.callee.accept(this)));
     }
 }

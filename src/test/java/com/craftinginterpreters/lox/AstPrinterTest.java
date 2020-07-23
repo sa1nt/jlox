@@ -4,6 +4,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import java.util.Arrays;
 import java.util.stream.Stream;
 
 import static com.craftinginterpreters.lox.TokenType.*;
@@ -76,7 +77,24 @@ class AstPrinterTest {
                                 new Expr.Literal(true)
                         ),
                         "(= varName true)"
-                )
+                ),
+                Arguments.arguments(
+                        new Expr.Variable(
+                                new Token(IDENTIFIER, "var", null, 1)
+                        ),
+                        "def var"
+                )/*,
+                Arguments.arguments(
+                        new Expr.Call(
+                                new Expr.Variable(new Token(IDENTIFIER, "test", null, 1)),
+                                new Token(LEFT_PAREN, null, null, 1),
+                                Arrays.asList(
+                                        new Expr.Literal(1d),
+                                        new Expr.Literal(2d)
+                                )
+                        ),
+                        "test(1,2);"
+                )*/
         );
     }
 }

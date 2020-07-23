@@ -1,5 +1,8 @@
 package com.craftinginterpreters.lox;
 
+import com.craftinginterpreters.lox.Stmt.Function;
+import com.craftinginterpreters.lox.Stmt.Return;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -11,18 +14,34 @@ import static com.craftinginterpreters.lox.TokenType.*;
 /**
  * program     → declaration* EOF ;
  *
- * declaration → varDeclaration
+ * declaration → funDecl
+ *             | varDeclaration
  *             | statement ;
+ *
+ * funDecl   → "fun" function ;
+ *
+ * function  → IDENTIFIER "(" parameters? ")" block;
+ *
+ * parameters → IDENTIFIER ( "," IDENTIFIER )* ;
  *
  * statement → exprStmt
  *           | ifStmt
+ *           | forStmt
+ *           | returnStmt
  *           | printStmt
  *           | whileStmt
+ *           | breakStmt
  *           | block ;
  *
  * ifStmt    → "if" "(" expression ")" statement ( "else" statement )? ;
  *
+ * forStmt   → "for" "(" ( varDecl | exprStmt | ";" )
+ *                       expression? ";"
+ *                       expression? ")" statement ;
+ *
  * block     → "{" declaration* "}" ;
+ *
+ * returnStmt → "return" expression? ";" ;
  *
  * exprStmt  → expression ";" ;
  * printStmt → "print" expression ";" ;
@@ -43,14 +62,20 @@ import static com.craftinginterpreters.lox.TokenType.*;
  * comparison         → addition ( ( ">" | ">=" | "<" | "<=" ) addition )* ;
  * addition           → multiplication ( ( "-" | "+" ) multiplication )* ;
  * multiplication     → unary ( ( "/" | "*" ) unary )* ;
- * unary → ( "!" | "-" ) unary
- *       | primary
- *       // Error productions for cases when a binary operation is missing a left operand
- *       | ( "+" | "/"  | "*" ) unary ;
- * primary → "true" | "false" | "nil"
- *         | NUMBER | STRING
- *         | "(" expression ")"
- *         | IDENTIFIER ;
+ * unary              → ( "!" | "-" ) unary
+ *                    | call
+ *                    | primary
+ *                    // Error productions for cases when a binary operation is missing a left operand
+ *                    | ( "+" | "/"  | "*" ) unary ;
+ * call               → primary ( "(" arguments? ")" )* ;
+ *
+ * // we're using 'assignment' instead of 'expression' here because
+ * //   'expression' resolves in 'comma', and that's not what we want
+ * arguments          → assignment ( "," assignment )* ;
+ * primary            → "true" | "false" | "nil"
+ *                    | NUMBER | STRING
+ *                    | "(" expression ")"
+ *                    | IDENTIFIER ;
  */
 class Parser {
     private final List<Token> tokens;
@@ -77,6 +102,7 @@ class Parser {
      */
     private Stmt declaration() {
         try {
+            if (match(FUN)) return function("function");
             if (match(VAR)) return finishVarDeclaration();
 
             return statement();
@@ -92,12 +118,15 @@ class Parser {
      *           | forStmt
      *           | printStmt
      *           | whileStmt
+     *           | returnStmt
+     *           | breakStmt
      *           | block ;
      */
     private Stmt statement() {
         if (match(FOR)) return finishForStatement();
         if (match(IF)) return finishIfStatement();
         if (match(PRINT)) return finishPrintStatement();
+        if (match(RETURN)) return returnStatement();
         if (match(WHILE)) return finishWhileStatement();
         if (match(LEFT_BRACE)) return new Stmt.Block(finishBlockStatement());
 
@@ -106,7 +135,8 @@ class Parser {
                 consume(SEMICOLON, "Expected ';' after break");
                 return new Stmt.Break();
             } else {
-                throw error(previous(), "break; statement allowed only inside a loop");
+                //noinspection ThrowableNotThrown
+                error(previous(), "break; statement allowed only inside a loop");
             }
         }
 
@@ -199,6 +229,20 @@ class Parser {
     }
 
     /**
+     * returnStmt → "return" expression? ";" ;
+     */
+    private Stmt returnStatement() {
+        Token keyword = previous();
+        Expr value = null;
+        if (!check(SEMICOLON)) {
+            value = expression();
+        }
+
+        consume(SEMICOLON, "Expect ';' after return value");
+        return new Return(keyword, value);
+    }
+
+    /**
      * whileStmt → "while" "(" expression ")" statement ;
      */
     private Stmt finishWhileStatement() {
@@ -262,6 +306,31 @@ class Parser {
      */
     private Expr expression() {
         return comma();
+    }
+
+    /**
+     * declaration -> funDecl
+     *              | var
+     */
+    private Function function(String kind) {
+        Token name = consume(IDENTIFIER, String.format("Expect %s name.", kind));
+        consume(LEFT_PAREN, String.format("Expect '(' after %s name.", kind));
+        List<Token> parameters = new ArrayList<>();
+        if (!check(RIGHT_PAREN)) {
+            do {
+                if (parameters.size() >= 255) {
+                    //noinspection ThrowableNotThrown
+                    error(peek(), "Cannot have more than 255 parameters");
+                }
+
+                parameters.add(consume(IDENTIFIER, "Expect parameter name."));
+            } while (match(COMMA));
+        }
+        consume(RIGHT_PAREN, "Expect ')' after parameters");
+
+        consume(LEFT_BRACE, String.format("Expect '{' before %s body", kind));
+        List<Stmt> body = finishBlockStatement();
+        return new Function(name, parameters, body);
     }
 
     /**
@@ -381,10 +450,11 @@ class Parser {
     }
 
     /**
-     * unary → ( "!" | "-" ) unary
-     *       | primary
-     *       // Error productions for cases when a binary operation is missing a left operand
-     *       | ( "+" | "/"  | "*" ) unary ;
+     * unary              → ( "!" | "-" ) unary
+     *                    | call
+     *                    | primary
+     *                    // Error productions for cases when a binary operation is missing a left operand
+     *                    | ( "+" | "/"  | "*" ) unary ;
      */
     private Expr unary() {
         if (match(List.of(BANG, MINUS))) {
@@ -398,7 +468,45 @@ class Parser {
             Lox.error(previous, "Not allowed as a unary operator");
         }
 
-        return primary();
+        return call();
+    }
+
+    /*
+     * call               → primary ( "(" arguments? ")" )* ;
+     */
+    private Expr call() {
+        Expr expr = primary();
+
+        while (true) {
+            if (match(LEFT_PAREN)) {
+                expr = finishCall(expr);
+            } else {
+                break;
+            }
+        }
+
+        return expr;
+    }
+
+    private Expr finishCall(Expr callee) {
+        List<Expr> arguments = new ArrayList<>();
+        if (!check(RIGHT_PAREN)) {
+            do {
+                if (arguments.size() >= 255) {
+                    //noinspection ThrowableNotThrown
+                    error(peek(), "Cannot have more than 255 arguments");
+                }
+                /*
+                 * we're using 'assignment' instead of 'expression' here because
+                 *   'expression' resolves in 'comma', and that's not what we want
+                 */
+                arguments.add(assignment());
+            } while (match(COMMA));
+        }
+
+        Token paren = consume(RIGHT_PAREN, "Expect ')' after arguments");
+
+        return new Expr.Call(callee, paren, arguments);
     }
 
     /**

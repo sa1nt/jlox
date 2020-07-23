@@ -1,10 +1,31 @@
 package com.craftinginterpreters.lox;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class RootEnvironment implements Environment {
-    private final Map<String, Object> values = new HashMap<>();
+    private final Map<String, Object> values;
+
+    public RootEnvironment() {
+        this.values = new HashMap<>();
+        this.define("clock", new LoxCallable() {
+            @Override
+            public int arity() {
+                return 0;
+            }
+
+            @Override
+            public Object call(Interpreter interpreter, List<Object> arguments) {
+                return (double) System.currentTimeMillis() / 1000.0;
+            }
+
+            @Override
+            public String toString() {
+                return "<native fn clock>";
+            }
+        });
+    }
 
     @Override
     public void define(String name, Object value) {

@@ -1,5 +1,7 @@
 package com.craftinginterpreters.lox;
 
+import java.util.ArrayList;
+
 public class AstPrinter implements Expr.Visitor<String> {
     String print(Expr expr) {
         return expr.accept(this);
@@ -44,6 +46,13 @@ public class AstPrinter implements Expr.Visitor<String> {
     @Override
     public String visitVariableExpr(Expr.Variable expr) {
         return "def " + expr.name.getLexeme();
+    }
+
+    @Override
+    public String visitCallExpr(Expr.Call expr) {
+        ArrayList<Expr> callExprs = new ArrayList<>(expr.arguments);
+        callExprs.add(0, expr.callee);
+        return parenthesize("call", callExprs.toArray(new Expr[0]));
     }
 
     private String parenthesize(String name, Expr... exprs) {
