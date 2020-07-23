@@ -125,7 +125,7 @@ class ParserTest {
                                                 new Token(IDENTIFIER, "test", null, 1)
                                         ),
                                         new Token(RIGHT_PAREN, ")", null, 1),
-                                        Arrays.asList(
+                                        List.of(
                                                 new Expr.Variable(
                                                         new Token(IDENTIFIER, "a", null, 1)
                                                 )
